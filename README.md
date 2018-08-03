@@ -2,7 +2,7 @@
 
 Socrates is an open source Discord Bot bootstrap, capable of fetching GIFs via Giphy, Wikipedia article previews as well as Oxford & Urban Dictionary definitions.
 
-Please note that Socrates requires the following environment varibles in the runtime:
+Please note that Socrates requires the following environment variables in the process environment:
 
 export SOCRATES_BOT_USERNAME="INSERT-DISCORD-BOT-USERNAME-HERE"  
 export SOCRATES_BOT_TOKEN="INSERT-DISCORD-BOT-TOKEN-HERE"  
