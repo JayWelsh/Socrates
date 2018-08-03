@@ -1,0 +1,10 @@
+{
+    "my_discord_username_with_discriminator":"SOCRATES_BOT_USERNAME", 
+    "my_discord_token": "SOCRATES_BOT_TOKEN",
+    "oxford_dictionary_host": "od-api.oxforddictionaries.com",
+    "oxford_dictionary_app_id": "SOCRATES_BOT_OXFORD_DICTIONARY_ID",
+    "oxford_dictionary_app_key": "SOCRATES_BOT_OXFORD_DICTIONARY_KEY",
+    "urban_dictionary_host": "api.urbandictionary.com",
+    "giphy_host": "api.giphy.com",
+    "giphy_token":"SOCRATES_BOT_GIPHY_TOKEN"
+}

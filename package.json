@@ -1,0 +1,21 @@
+{
+  "name": "socrates",
+  "version": "1.0.0",
+  "description": "the bot.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jay Welsh",
+  "license": "MIT",
+  "dependencies": {
+    "bufferutil": "^3.0.5",
+    "discord.js": "^11.3.2",
+    "erlpack": "^0.1.2",
+    "gfycat-sdk": "^1.4.16",
+    "uws": "^10.148.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  }
+}
