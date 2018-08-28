@@ -21,6 +21,7 @@ DiscordBot.on('ready', () => {
 });
 
 DiscordBot.on('message', (message) => {
+    let applicationType = "discord";
     let messageSenderWithDiscriminator = (message.author.username + "#" + message.author.discriminator);
     let messageFiltered = message.content.trim().replace(/[^a-z0-9 -]/ig, '');
     let wordArray = messageFiltered.split(" ");
