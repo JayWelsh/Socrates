@@ -26,7 +26,7 @@ DiscordBot.on('message', (message) => {
     let messageFiltered = message.content.trim().replace(/[^a-z0-9 -]/ig, '');
     let wordArray = messageFiltered.split(" ");
     if ((messageSenderWithDiscriminator !== process.env[config.my_discord_username_with_discriminator]) && (wordArray.length >= 1) && (messageFiltered.length >= 1)) {
-        let messageResponse = getMessageResponse(message, wordArray, messageFiltered);
+        let messageResponse = getMessageResponse(message, wordArray, messageFiltered, applicationType);
     }
 });
 
