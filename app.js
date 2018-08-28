@@ -161,7 +161,7 @@ function getGiphy(originMessageObj, searchString, applicationType) {
                         const embed = new Discord.RichEmbed().setImage(giphyURL);
                         sendDiscordEmbed(originMessageObj, embed);
                     } else {
-                        let urbanDefinitionResponse = "I found no Urban Dictionary definition for \"" + searchString + "\".\r\n\r\n";
+                        let urbanDefinitionResponse = "I found no GIF for \"" + searchString + "\".\r\n\r\n";
                         sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                     }
                 }
@@ -196,15 +196,19 @@ function getUrbanDefinition(originMessageObj, searchString, applicationType) {
             let urbanDefinitionResponse = "";
             rest.callAPI(options, function (statusCode, result) {
                 if (statusCode == 200) {
-                    if (result && result.result_type && (result.result_type == "exact") && (result.list && result.list[0] && result.list[0].definition)) {
+                    if ((result.list && result.list[0] && result.list[0].definition)) {
                         let definition = result.list[0].definition;
                         if (definition.length >= 1) {
                             urbanDefinitionResponse = "I found the following Urban Dictionary definition for " + phrasing + " \"" + searchString + "\":\r\n\r\n" + definition;
-                            sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                            if (applicationType == "discord") {
+                                sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                            }
                         }
                     } else if (result && result.result_type && (result.result_type == "no_results")){
                         urbanDefinitionResponse = "I found no Urban Dictionary definition for " + phrasing + " \"" + searchString + "\".\r\n\r\n";
-                        sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                        if (applicationType == "discord") {
+                            sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                        }
                     }
                 }
             });
