@@ -6,5 +6,8 @@
     "oxford_dictionary_app_key": "SOCRATES_BOT_OXFORD_DICTIONARY_KEY",
     "urban_dictionary_host": "api.urbandictionary.com",
     "giphy_host": "api.giphy.com",
-    "giphy_token":"SOCRATES_BOT_GIPHY_TOKEN"
+    "giphy_token":"SOCRATES_BOT_GIPHY_TOKEN",
+    "my_kik_username":"SOCRATES_BOT_KIK_USERNAME",
+    "my_kik_key":"SOCRATES_BOT_KIK_KEY",
+    "my_kik_webhook":"SOCRATES_BOT_KIK_WEBHOOK"
 }

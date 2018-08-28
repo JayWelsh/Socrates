@@ -1,13 +1,26 @@
-const Discord = require('discord.js');
-const bot = new Discord.Client();
+'use strict';
+
+/* Generic */
 const config = require('./config.json');
 const rest = require('./utils/utils.js');
+const request = require('request');
 
-bot.on('ready', () => {
+/* Discord */
+const Discord = require('discord.js');
+const DiscordBot = new Discord.Client();
+
+/* Kik */
+const util = require('util'); 
+const https = require('http');
+const KikBotModule  = require('@kikinteractive/kik');
+
+/* Discord Bot Below */
+
+DiscordBot.on('ready', () => {
     console.log("I'm ready!");
 });
 
-bot.on('message', (message) => {
+DiscordBot.on('message', (message) => {
     let messageSenderWithDiscriminator = (message.author.username + "#" + message.author.discriminator);
     let messageFiltered = message.content.trim().replace(/[^a-z0-9 -]/ig, '');
     let wordArray = messageFiltered.split(" ");
@@ -16,24 +29,24 @@ bot.on('message', (message) => {
     }
 });
 
-function getMessageResponse(discordMessageObj, wordArray, messageFiltered) {
+function getMessageResponse(originMessageObj, wordArray, messageFiltered, applicationType) {
     if ((wordArray.length >= 1) && (messageFiltered.length >= 1)) {
         let firstWord = wordArray[0].toLowerCase();
         switch(true) {
             case (firstWord == "define"):
-                getOxfordDefinition(discordMessageObj, wordArray.slice(1).join(" "));
+                getOxfordDefinition(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
             case (firstWord == "udefine"):
-                getUrbanDefinition(discordMessageObj, wordArray.slice(1).join(" "));
+                getUrbanDefinition(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
             case ((wordArray[0] == "urban") && (wordArray[1] == "define")):
-                getUrbanDefinition(discordMessageObj, wordArray.slice(2).join(" "));
+                getUrbanDefinition(originMessageObj, wordArray.slice(2).join(" "), applicationType);
                 break;
             case (firstWord == "gif" || firstWord == "giphy" || firstWord == "giffy"):
-                getGiphy(discordMessageObj, wordArray.slice(1).join(" "));
+                getGiphy(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
             case (firstWord == "wiki"):
-                getWiki(discordMessageObj, wordArray.slice(1).join(" "));
+                getWiki(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
         }
     }else{
@@ -41,11 +54,11 @@ function getMessageResponse(discordMessageObj, wordArray, messageFiltered) {
     }
 }
 
-function getSmartResponse(discordMessageObj, wordArray){
+function getSmartResponse(originMessageObj, wordArray){
     console.log("TODO");
 }
 
-function getWiki(discordMessageObj, searchString) {
+function getWiki(originMessageObj, searchString, applicationType) {
     try{
         if (searchString && searchString.length >= 1) {
 
@@ -105,12 +118,12 @@ function getWiki(discordMessageObj, searchString) {
                                     } else {
                                         embed = new Discord.RichEmbed().setURL(wikiURL).setTitle(wikiTitle).setDescription(wikiExtract);
                                     }
-                                    sendEmbed(discordMessageObj, embed);
+                                    sendDiscordEmbed(originMessageObj, embed);
                                 });
                             }
                         } else {
                             let urbanDefinitionResponse = "I found no Wikipedia entry for \"" + searchString + "\".\r\n\r\n";
-                            sendMessage(discordMessageObj, urbanDefinitionResponse, true);
+                            sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                         }
                 }
             });
@@ -122,13 +135,13 @@ function getWiki(discordMessageObj, searchString) {
     }
 }
 
-function getGiphy(discordMessageObj, searchString) {
+function getGiphy(originMessageObj, searchString, applicationType) {
     try{
         if (searchString && searchString.length >= 1) {
             let urlSearchString = encodeURI(searchString.toLowerCase());
             let path = '/v1/gifs/search?q=' + urlSearchString;
             var options = {
-                host: process.env[config.giphy_host],
+                host: config.giphy_host,
                 port: 443,
                 path: path,
                 method: 'GET',
@@ -145,10 +158,10 @@ function getGiphy(discordMessageObj, searchString) {
                         let giphyArray = result.data;
                         let giphyURL = giphyArray[Math.floor(Math.random()*giphyArray.length)].images.fixed_width.url;
                         const embed = new Discord.RichEmbed().setImage(giphyURL);
-                        sendEmbed(discordMessageObj, embed);
+                        sendDiscordEmbed(originMessageObj, embed);
                     } else {
                         let urbanDefinitionResponse = "I found no Urban Dictionary definition for \"" + searchString + "\".\r\n\r\n";
-                        sendMessage(discordMessageObj, urbanDefinitionResponse, true);
+                        sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                     }
                 }
             });
@@ -160,13 +173,13 @@ function getGiphy(discordMessageObj, searchString) {
     }
 }
 
-function getUrbanDefinition(discordMessageObj, searchString) {
+function getUrbanDefinition(originMessageObj, searchString, applicationType) {
     try{
         if (searchString && searchString.length >= 1) {
             let urlSearchString = encodeURI(searchString.toLowerCase());
             let path = '/v0/define?term=' + urlSearchString;
             var options = {
-                host: process.env[config.urban_dictionary_host],
+                host: config.urban_dictionary_host,
                 port: 443,
                 path: path,
                 method: 'GET',
@@ -186,11 +199,11 @@ function getUrbanDefinition(discordMessageObj, searchString) {
                         let definition = result.list[0].definition;
                         if (definition.length >= 1) {
                             urbanDefinitionResponse = "I found the following Urban Dictionary definition for " + phrasing + " \"" + searchString + "\":\r\n\r\n" + definition;
-                            sendMessage(discordMessageObj, urbanDefinitionResponse, true);
+                            sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                         }
                     } else if (result && result.result_type && (result.result_type == "no_results")){
                         urbanDefinitionResponse = "I found no Urban Dictionary definition for " + phrasing + " \"" + searchString + "\".\r\n\r\n";
-                        sendMessage(discordMessageObj, urbanDefinitionResponse, true);
+                        sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                     }
                 }
             });
@@ -202,13 +215,13 @@ function getUrbanDefinition(discordMessageObj, searchString) {
     }
 }
 
-function getOxfordDefinition(discordMessageObj, searchString) {
+function getOxfordDefinition(originMessageObj, searchString, applicationType) {
     try {
         if (searchString && searchString.length >= 1) {
             let urlSearchString = encodeURI(searchString.toLowerCase());
             let path = '/api/v1/entries/en/' + urlSearchString;
             var options = {
-                host: process.env[config.oxford_dictionary_host],
+                host: config.oxford_dictionary_host,
                 port: 443,
                 path: path,
                 method: 'GET',
@@ -255,12 +268,20 @@ function getOxfordDefinition(discordMessageObj, searchString) {
                         let definitionCount = index + 1 //Because users are not programmers
                         definitionResponse += "\r\n\r\n" + definitionCount + ". " + definition;
                         if (definitionCount == definitions.length) {
-                            sendMessage(discordMessageObj, definitionResponse, true);
+                            if (applicationType == "discord") {
+                                sendDiscordMessage(originMessageObj, definitionResponse, true);
+                            }else if (applicationType == "kik") {
+                                sendKikMessage(originMessageObj, definitionResponse);
+                            }
                         }
                     });
-                }else if(statusCode == 404){
+                } else if (statusCode == 404) {
                     definitionNotFoundResponse = "I did not manage to find a defintion for the " + phrasing + " \"" + searchString + "\".\r\n\r\nP.S. This works best with singular root words (e.g. \"cat\" instead of \"cats\" or \"break\" instead of \"breaking\").";
-                    sendMessage(discordMessageObj, definitionNotFoundResponse, true);
+                    if (applicationType == "discord") {
+                        sendDiscordMessage(originMessageObj, definitionNotFoundResponse, true);
+                    } else if (applicationType == "kik") {
+                        sendKikMessage(originMessageObj, definitionNotFoundResponse);
+                    }
                 }
             });
         } else {
@@ -271,7 +292,7 @@ function getOxfordDefinition(discordMessageObj, searchString) {
     }
 }
 
-function sendMessage(discordMessageObj, message, replyToMessageSender) {
+function sendDiscordMessage(discordMessageObj, message, replyToMessageSender) {
     if(discordMessageObj && message && replyToMessageSender) {
         discordMessageObj.reply(message);
     }else if(discordMessageObj && message){
@@ -280,7 +301,7 @@ function sendMessage(discordMessageObj, message, replyToMessageSender) {
     }
 }
 
-function sendEmbed(discordMessageObj, embed) {
+function sendDiscordEmbed(discordMessageObj, embed) {
     if(discordMessageObj && embed) {
         discordMessageObj.channel.send({embed});
     }else {
@@ -288,4 +309,85 @@ function sendEmbed(discordMessageObj, embed) {
     }
 }
 
-bot.login(process.env[config.my_discord_token]);
+function sendKikMessage(kikMessageObj, messageBody){
+    console.error("messageBody",messageBody);
+    request.post({
+        url: "https://api.kik.com/v1/message",
+        auth: {
+            user: "socratesbot",
+            pass: "c7519de8-8a83-4ab4-8484-7c0a4f30d785"
+        },
+        json: {
+            "messages": [
+                {
+                    "body": messageBody.replace(/\r/g,''), 
+                    "to": kikMessageObj._state.from, 
+                    "type": "text", 
+                    "chatId": kikMessageObj._state.chatId
+                }
+            ]
+        }
+    }, callback);
+}
+
+DiscordBot.login(process.env[config.my_discord_token]);
+
+/* Discord Bot Above */
+
+
+/* Kik Bot Below */
+
+// We are first gonna create a new bot object with all of 
+// the information we just filled in on dev.kik.com
+let KikBot = new KikBotModule({
+    username: process.env[config.my_kik_username], // The username you gave BotsWorth on Kik 
+    apiKey: process.env[config.my_kik_key], // The API Key you can find on your profile on dev.kik.com
+    baseUrl: process.env[config.my_kik_webhook] // THIS IS YOUR WEBHOOK! make sure this maches the web tunnel or host you have running 
+});
+
+// Send the configuration to kik to update the bot with the information above
+KikBot.updateBotConfiguration();
+
+// The onTextMessage(message) handler. This is run everytime your bot gets a message. 
+// The method takes a message object as a parameter.
+KikBot.onTextMessage((message) => {
+    console.log("message", message);
+    try {
+        let applicationType = "kik";
+        let messageFiltered = message.body.trim().replace(/[^a-z0-9 -]/ig, '');
+        let wordArray = messageFiltered.split(" ");
+        if ((wordArray.length >= 1) && (messageFiltered.length >= 1)) {
+            let messageResponse = getMessageResponse(message, wordArray, messageFiltered, applicationType);
+        }
+        // print out the message so we can see on the server what's being sent 
+        console.log(message.body);
+    } catch (error) {
+        console.error(JSON.stringify(error));
+    }
+});
+
+function callback(param) {
+    console.log("Kik response sent");
+}
+
+// We want to set up our start chatting message. This will be the first message the user gets when they start 
+// chatting with your bot. This message is only sent once. 
+// KikBot.onStartChattingMessage((message) => {
+//     // KikBot.getUserProfile(message.from)
+//     //     .then((user) => {
+//     //         message.reply(`Hey ${user.firstName}!`);
+//     //     });
+// });
+
+// Set up your server and start listening
+let server = https
+    .createServer(KikBot.incoming())
+    .listen(8000, (err) => {
+  if (err) {
+    return console.log('something bad happened', err)
+  }
+
+  console.log(`server is listening on 8000`)
+});
+
+/* Kik Bot Above */
