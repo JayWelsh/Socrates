@@ -23,7 +23,8 @@ DiscordBot.on('ready', () => {
 DiscordBot.on('message', (message) => {
     let applicationType = "discord";
     let messageSenderWithDiscriminator = (message.author.username + "#" + message.author.discriminator);
-    let messageFiltered = message.content.trim().replace(/[^a-z0-9 -]/ig, '');
+    //Remove mentions then remove illegal chars for bot command processing then trim
+    let messageFiltered = message.content.replace(/<@(.*)>/ig, '').replace(/[^a-z0-9 -]/ig, '').trim(); 
     let wordArray = messageFiltered.split(" ");
     if ((messageSenderWithDiscriminator !== process.env[config.my_discord_username_with_discriminator]) && (wordArray.length >= 1) && (messageFiltered.length >= 1)) {
         let messageResponse = getMessageResponse(message, wordArray, messageFiltered, applicationType);
@@ -34,24 +35,45 @@ function getMessageResponse(originMessageObj, wordArray, messageFiltered, applic
     if ((wordArray.length >= 1) && (messageFiltered.length >= 1)) {
         let firstWord = wordArray[0].toLowerCase();
         switch(true) {
-            case (firstWord == "define"):
+            case ((firstWord == "define") && (wordArray.length <= 5)):
                 getOxfordDefinition(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
-            case (firstWord == "udefine"):
+            case ((firstWord == "udefine") && (wordArray.length <= 5)):
                 getUrbanDefinition(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
-            case ((wordArray[0] == "urban") && (wordArray[1] == "define")):
+            case ((wordArray[0] == "urban") && (wordArray[1] == "define") && (wordArray.length <= 5)):
                 getUrbanDefinition(originMessageObj, wordArray.slice(2).join(" "), applicationType);
                 break;
             case (firstWord == "gif" || firstWord == "giphy" || firstWord == "giffy"):
                 getGiphy(originMessageObj, wordArray.slice(1).join(" "), applicationType);
                 break;
-            case (firstWord == "wiki"):
+            case (firstWord == "wiki" || firstWord == "wikipedia"):
                 getWiki(originMessageObj, wordArray.slice(1).join(" "), applicationType);
+                break;
+            case ((firstWord == "help") && (wordArray.length == 1)):
+                getHelp(originMessageObj, applicationType);
                 break;
         }
     }else{
         return false;
+    }
+}
+
+function getHelp(originMessageObj, applicationType){
+    if (applicationType == "discord") {
+        let repoURL = "https://github.com/JayWelsh/Socrates";
+        let authorIconURL = "https://cdn.discordapp.com/avatars/460872911721332736/56b7742841a629b9a6452cf01e441513.png";
+        let title = "I am able to help in the following ways...";
+        let embed = new Discord.RichEmbed()
+        .setAuthor(title, authorIconURL)
+        .addField("I can fetch GIFs:", "**gif** wisdom __or__ **giphy** wisdom __or__ **giffy** wisdom")
+        .addField("I can fetch Wikipedia pages:", "**wiki** wisdom __or__ **wikipedia** wisdom")
+        .addField("I can fetch Oxford Dictionary Definitions:", "**define** wisdom")
+        .addField("I can fetch Urban Dictionary Definitions:", "**udefine** wisdom __or__ **urban define** wisdom")
+        .setFooter("The word \"wisdom\" can be replaced with any other word(s) in the examples above.");
+        sendDiscordEmbed(originMessageObj, embed);
+    } else if (applicationType == "kik") {
+        sendKikMessage(originMessageObj, definitionNotFoundResponse);
     }
 }
 
@@ -123,8 +145,9 @@ function getWiki(originMessageObj, searchString, applicationType) {
                                 });
                             }
                         } else {
-                            let urbanDefinitionResponse = "I found no Wikipedia entry for \"" + searchString + "\".\r\n\r\n";
-                            sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                            // Leaving to rather do nothing
+                            // let urbanDefinitionResponse = "I found no Wikipedia entry for \"" + searchString + "\".\r\n\r\n";
+                            // sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                         }
                 }
             });
@@ -161,8 +184,9 @@ function getGiphy(originMessageObj, searchString, applicationType) {
                         const embed = new Discord.RichEmbed().setImage(giphyURL);
                         sendDiscordEmbed(originMessageObj, embed);
                     } else {
-                        let urbanDefinitionResponse = "I found no GIF for \"" + searchString + "\".\r\n\r\n";
-                        sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
+                        // Leaving to rather do nothing
+                        // let urbanDefinitionResponse = "I found no GIF for \"" + searchString + "\".\r\n\r\n";
+                        // sendDiscordMessage(originMessageObj, urbanDefinitionResponse, true);
                     }
                 }
             });
@@ -319,8 +343,8 @@ function sendKikMessage(kikMessageObj, messageBody){
     request.post({
         url: "https://api.kik.com/v1/message",
         auth: {
-            user: "socratesbot",
-            pass: "c7519de8-8a83-4ab4-8484-7c0a4f30d785"
+            user: process.env[config.my_kik_username],
+            pass: process.env[config.my_kik_key]
         },
         json: {
             "messages": [
